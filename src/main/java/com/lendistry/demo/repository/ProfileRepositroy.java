@@ -31,17 +31,16 @@ public class ProfileRepositroy {
     public boolean addProfile(Profile profile){
         try{
             Integer randomProfileId = this.generateProfileId();
-            profile.setProfileId(randomProfileId);
-            this.profileMap.put(randomProfileId, profile);
+            this.profileMap.put(randomProfileId, new Profile(randomProfileId, profile.name(), profile.emailId()));
             return true;
-        }catch(Exception ex){
+        } catch(Exception ex){
             return false;
         }
     }
 
     public boolean updateProfile(Profile profile){
-        if(profile.getProfileId() != null && this.profileMap.containsKey(profile.getProfileId())) {
-            this.profileMap.put(profile.getProfileId(), profile);
+        if(profile.profileId() != null && this.profileMap.containsKey(profile.profileId())) {
+            this.profileMap.put(profile.profileId(), profile);
             return true;
         }
         return false;

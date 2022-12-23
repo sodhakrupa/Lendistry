@@ -2,6 +2,8 @@ package com.lendistry.demo.controller;
 
 import com.lendistry.demo.models.Profile;
 import com.lendistry.demo.service.ProfileService;
+import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -10,31 +12,35 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.Collection;
 import java.util.Optional;
 
-@RequestMapping("/api/profile/")
 @RestController
+@RequestMapping("/profiles")
 public class ProfileController {
 
     @Autowired
     private ProfileService profileService;
 
+    @Autowired
+    private ObservationRegistry observationRegistry;
+
     @GetMapping()
     public Collection<Profile> getAllProfiles(){
-        return profileService.fetchAllProfiles();
+        return Observation.createNotStarted("getAllProfiles", observationRegistry).observe(() -> profileService.fetchAllProfiles());
     }
 
     @GetMapping("/{profileId}")
     public Profile getProfile(@PathVariable("profileId")Integer profileId){
         Optional<Profile> profile = this.profileService.fetchProfile(profileId);
-        if(profile.isPresent()){
+        return profile.orElseThrow(() -> new RuntimeException("Profile Not Found with id "+ profileId));
+       /* if(profile.isPresent()){
             return profile.get();
         } else{
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Profile Not Found");
-        }
+        } */
     }
 
     @PostMapping()
     public String addNewProfile(@RequestBody() Profile profile){
-        boolean profileAdded =  profileService.addNewProfile(profile);
+        var profileAdded =  profileService.addNewProfile(profile);
         if(profileAdded){
             return "Profile added successfully";
         }else{
@@ -54,7 +60,7 @@ public class ProfileController {
 
     @PutMapping()
     public String updateProfile(@RequestBody() Profile profile){
-        boolean profileUpdated =  profileService.updateProfile(profile);
+        var profileUpdated =  profileService.updateProfile(profile);
         return profileUpdated ? "Profile successfully updated" : "Profile not updated, Please validate profileId";
     }
 }
